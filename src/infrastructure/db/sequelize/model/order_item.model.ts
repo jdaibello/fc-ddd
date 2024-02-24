@@ -26,10 +26,10 @@ export default class OrderItemModel extends Model {
 	declare order: Awaited<OrderModel>;
 
 	@Column({ allowNull: false })
-	declare quantity: number;
+	declare name: string;
 
 	@Column({ allowNull: false })
-	declare name: number;
+	declare quantity: number;
 
 	@Column({ allowNull: false })
 	declare price: number;
