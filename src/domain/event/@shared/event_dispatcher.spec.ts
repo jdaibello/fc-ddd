@@ -5,6 +5,9 @@ import SendConsoleLog1Handler from "./product/handlers/send_console_log_1.handle
 import SendEmailWhenProductIsCreatedHandler from "./product/handlers/send_email_when_product_is_created.handler";
 import SendConsoleLog2Handler from "./product/handlers/send_console_log_2.handler";
 import ProductCreatedEvent from "./product/product_created.event";
+import SendConsoleLogHandler from "./product/handlers/send_console_log.handler";
+import Customer from "../../entity/customer";
+import CustomerAddressChangedEvent from "./product/customer_address_changed.event";
 
 describe("Domain events tests", () => {
 	it("should register an event handler", () => {
@@ -75,16 +78,35 @@ describe("Domain events tests", () => {
 		expect(eventDispatcher.getEventHandlers["CustomerCreatedEvent"][1]).toMatchObject(consoleLogTwoEventHandler);
 
 		const customerCreatedEvent = new CustomerCreatedEvent({
-			id: 1,
-			name: "Customer 1",
-			address: new Address("Street 1", 1, "City 1", "12345-678"),
-			active: true,
-			rewardPoints: 0
+			id: "1",
+			name: "Customer 1"
 		});
 
 		eventDispatcher.notify(customerCreatedEvent);
 
 		expect(spyConsoleLogOneEventHandler).toHaveBeenCalled();
 		expect(spyConsoleLogTwoEventHandler).toHaveBeenCalled();
+	});
+
+	it("should notify all customer address changed event handlers", () => {
+		const eventDispatcher = new EventDispatcher();
+		const consoleLogEventHandler = new SendConsoleLogHandler();
+		const spyConsoleLogEventHandler = jest.spyOn(consoleLogEventHandler, "handle");
+
+		eventDispatcher.register("CustomerAddressChangedEvent", consoleLogEventHandler);
+		expect(eventDispatcher.getEventHandlers["CustomerAddressChangedEvent"][0]).toMatchObject(consoleLogEventHandler);
+
+		const customer = new Customer("1", "Customer 1");
+		customer.changeAddress(new Address("Street 1", 1, "City 1", "12345-678"));
+
+		const customerAddressChangedEvent = new CustomerAddressChangedEvent({
+			id: customer.id,
+			name: customer.name,
+			address: customer.address
+		});
+
+		eventDispatcher.notify(customerAddressChangedEvent);
+
+		expect(spyConsoleLogEventHandler).toHaveBeenCalled();
 	});
 });
