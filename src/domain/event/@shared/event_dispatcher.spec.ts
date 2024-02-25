@@ -1,5 +1,9 @@
+import Address from "../../entity/address";
 import EventDispatcher from "./event_dispatcher";
+import CustomerCreatedEvent from "./product/customer_created.event";
+import SendConsoleLog1Handler from "./product/handlers/send_console_log_1.handler";
 import SendEmailWhenProductIsCreatedHandler from "./product/handlers/send_email_when_product_is_created.handler";
+import SendConsoleLog2Handler from "./product/handlers/send_console_log_2.handler";
 import ProductCreatedEvent from "./product/product_created.event";
 
 describe("Domain events tests", () => {
@@ -56,5 +60,31 @@ describe("Domain events tests", () => {
 		eventDispatcher.notify(productCreatedEvent);
 
 		expect(spyEventHandler).toHaveBeenCalled();
+	});
+
+	it("should notify all customer created event handlers", () => {
+		const eventDispatcher = new EventDispatcher();
+		const consoleLogOneEventHandler = new SendConsoleLog1Handler();
+		const consoleLogTwoEventHandler = new SendConsoleLog2Handler();
+		const spyConsoleLogOneEventHandler = jest.spyOn(consoleLogOneEventHandler, "handle");
+		const spyConsoleLogTwoEventHandler = jest.spyOn(consoleLogTwoEventHandler, "handle");
+
+		eventDispatcher.register("CustomerCreatedEvent", consoleLogOneEventHandler);
+		eventDispatcher.register("CustomerCreatedEvent", consoleLogTwoEventHandler);
+		expect(eventDispatcher.getEventHandlers["CustomerCreatedEvent"][0]).toMatchObject(consoleLogOneEventHandler);
+		expect(eventDispatcher.getEventHandlers["CustomerCreatedEvent"][1]).toMatchObject(consoleLogTwoEventHandler);
+
+		const customerCreatedEvent = new CustomerCreatedEvent({
+			id: 1,
+			name: "Customer 1",
+			address: new Address("Street 1", 1, "City 1", "12345-678"),
+			active: true,
+			rewardPoints: 0
+		});
+
+		eventDispatcher.notify(customerCreatedEvent);
+
+		expect(spyConsoleLogOneEventHandler).toHaveBeenCalled();
+		expect(spyConsoleLogTwoEventHandler).toHaveBeenCalled();
 	});
 });
